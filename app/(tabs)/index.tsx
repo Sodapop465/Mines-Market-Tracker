@@ -1,75 +1,149 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState } from 'react'
+import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native'
+import AsyncStorage from 'expo-sqlite/kv-store'
+import { Image } from 'expo-image'
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const Index = () => {
+  const [ meals, setMeals ] = useState<number|null>(null)
+  const width = Dimensions.get('window').width;
+  const height = Dimensions.get('window').height;
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+  async function getMeals() {
+    if (await AsyncStorage.getItem("numMeals") === null) {
+      await AsyncStorage.setItemAsync("numMeals", "80")
+    }
+    await setMeals(Number(await AsyncStorage.getItem("numMeals")))
+  }
+
+  async function handlePress() {
+    if (meals !== null) {
+      await AsyncStorage.setItemAsync("numMeals", String(meals-1))
+      setMeals(meals - 1)
+    } else {
+      console.error("Could not set 'numMeals' key to AsyncStorage")
+    }
+  }
+
+    async function handleAdd() {
+      if (meals !== null) {
+        await AsyncStorage.setItemAsync("numMeals", String(meals+1))
+        setMeals(meals + 1)
+      } else {
+        console.error("Could not set 'numMeals' key to AsyncStorage")
+      }
+    }
+
+  getMeals()
+
+  return(
+    <ScrollView style={styles.container}>
+      <Image
+        style = {[styles.logo, { width: width }]}
+        source = {require("../../assets/images/MinesMarketLogo.png")}
+        contentFit="cover"
+        transition={1000}
+      />
+
+      <Text style={styles.mealCount}>{String(meals)}</Text>
+      <Text style={styles.mealText}>meals</Text>
+
+      <Pressable 
+        style={({ pressed }) => [
+          [styles.buttonDefault, { 
+            width: width - 30, 
+            height: width - 30, 
+            borderRadius: width/2
+          }],
+          pressed ? 
+            [styles.buttonPressed, { 
+              width: width - 30, 
+              height: width - 30, 
+              borderRadius: width/2 }]: 
+            [styles.buttonDefault, {width: width - 30, 
+                height: width - 30, 
+                borderRadius: width/2}],
+        ]}
+        onPress={handlePress}
+      >
+        <Text style={styles.buttonText}>EAT</Text>
+      </Pressable>
+
+      <Pressable 
+        style={({ pressed }) => [
+          [styles.buttonDefault, { 
+            width: width/2, 
+            borderRadius: 20
+          }],
+          pressed ? styles.addMealsPressed : styles.addMealsDefault]}
+        onPress={handleAdd}
+      >
+        <Text style={styles.addMealsText}>Add Meal</Text>
+      </Pressable>
+    </ScrollView>
+  )
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+  },
+  logo: {
+    flex: 1,
+    height: 100,
+    width: 100,
+    alignSelf: 'center',
+    resizeMode: 'cover',
+  },
+  mealCount: {
+    flex: 1,
+    fontSize: 100,
+    alignSelf: 'center',
+    fontWeight: 'bold',
+  },
+  mealText: {
+    flex: 1,
+    marginTop: -20,
+    fontSize: 20,
+    alignSelf: 'center',
+  },
+  buttonDefault: {
+    flex: 1,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255, 98, 98, 1)',
+    marginTop: 20,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  buttonPressed: {
+    flex: 1,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(136, 255, 67, 1)',
+    marginTop: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  buttonText: {
+    alignSelf: 'center',
+    fontSize: 75,
+    fontWeight: '700',
   },
-});
+  addMealsDefault: {
+    flex: 1,
+    height: 40,
+    backgroundColor: 'rgba(207, 207, 207, 1)',
+  },
+  addMealsPressed: {
+    flex: 1,
+    height: 40,
+    backgroundColor: 'rgba(177, 177, 177, 1)',
+    justifyContent: 'center',
+    alignContent: 'center',
+  },
+  addMealsText: {
+    fontSize: 20,
+    fontWeight: '700'
+  },
+})
+
+
+export default Index
