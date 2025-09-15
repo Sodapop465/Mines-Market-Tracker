@@ -1,14 +1,38 @@
-import React, { useState } from 'react'
-import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { Text, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native'
 import AsyncStorage from 'expo-sqlite/kv-store'
+import * as SQLite from 'expo-sqlite'
 import { Image } from 'expo-image'
+import * as SplashScreen from 'expo-splash-screen'
+
+SplashScreen.preventAutoHideAsync();
+
 
 const Index = () => {
   const [ meals, setMeals ] = useState<number|null>(null)
-  const width = Dimensions.get('window').width;
-  const height = Dimensions.get('window').height;
+  const width = Dimensions.get('window').width
+  const height = Dimensions.get('window').height
+  let database: SQLite.SQLiteDatabase
 
-  async function getMeals() {
+  async function setup() {
+    // Setup SQLite
+    try {
+      database = await SQLite.openDatabaseAsync("database.db")
+    } catch(error) {
+      console.error("Could not open database: " + error)
+    }
+    try {
+      // Data is stored as a ISO 8601 String
+      await database.runAsync(`CREATE TABLE IF NOT EXISTS meal_history (
+        id INTEGER PRIMARY KEY,
+        meals_left INTEGER NOT NULL,
+        date text NOT NULL
+        );`)
+      } catch(error) {
+        console.error("Failed to create SQLite table: " + error)
+      }
+    
+    // Set up AsyncStorage
     if (await AsyncStorage.getItem("numMeals") === null) {
       await AsyncStorage.setItemAsync("numMeals", "80")
     }
@@ -17,23 +41,36 @@ const Index = () => {
 
   async function handlePress() {
     if (meals !== null) {
+      // AsyncStorage
       await AsyncStorage.setItemAsync("numMeals", String(meals-1))
       setMeals(meals - 1)
+
+      // SQLite
+      try {
+        await database.runAsync("INSERT INTO meal_history (meals_left, date) VALUES (?, ?);", meals, new Date().toISOString())
+      } catch(error) {
+        console.error("Failed to insert row into database: " + error)
+      }
     } else {
       console.error("Could not set 'numMeals' key to AsyncStorage")
     }
   }
 
-    async function handleAdd() {
-      if (meals !== null) {
-        await AsyncStorage.setItemAsync("numMeals", String(meals+1))
-        setMeals(meals + 1)
-      } else {
-        console.error("Could not set 'numMeals' key to AsyncStorage")
-      }
+  async function handleAdd() {
+    if (meals !== null) {
+      await AsyncStorage.setItemAsync("numMeals", String(meals+1))
+      setMeals(meals + 1)
+    } else {
+      console.error("Could not set 'numMeals' key to AsyncStorage")
     }
+  }
 
-  getMeals()
+  setup()
+
+  // hide splashcreen after everything loads
+  useEffect(() => {
+    SplashScreen.hideAsync()
+  }, []);
 
   return(
     <ScrollView style={styles.container}>
