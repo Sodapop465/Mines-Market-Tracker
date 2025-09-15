@@ -1,15 +1,23 @@
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite'
-import { Text, View, StyleSheet, FlatList, SectionList } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, SectionList } from 'react-native'
 import React, { useState, useCallback } from 'react'
 import { useFocusEffect } from '@react-navigation/native';
 import Moment from 'moment'
-import Swipeable from 'react-native-gesture-handler/Swipeable';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from 'expo-sqlite/kv-store';
+import * as Haptics from 'expo-haptics';
+
 
 
 const History = () => {
   return(
     <SQLiteProvider databaseName='database.db'>
-      <HistoryList/>
+      <GestureHandlerRootView>
+        <HistoryList/>
+      </GestureHandlerRootView>
     </SQLiteProvider>
   )
 }
@@ -88,64 +96,88 @@ const HistoryList = () => {
   }
 
   return (
-    <SectionList
-      sections={data}
-      renderItem={({item}) => <HistoryEntry id={item.id} date={item.date} mealsLeft={item.mealsLeft}/>}
-      renderSectionHeader={({section: {title}}) => (
-        <Text style={styles.headerText}>{title}</Text>
-      )}
-      stickySectionHeadersEnabled={false}
-      style={styles.listBackground}
-    />
+    <SafeAreaView edges={['bottom']} style={{flex:1}}>
+      <SectionList
+        sections={data}
+        renderItem={({item}) => <HistoryEntry id={item.id} date={item.date} mealsLeft={item.mealsLeft} updateData={getData}/>}
+        renderSectionHeader={({section: {title}}) => (
+          <Text style={styles.headerText}>{title}</Text>
+        )}
+        stickySectionHeadersEnabled={false}
+        style={styles.listBackground}
+        contentInset={{ bottom: 80 }}
+      />
+    </SafeAreaView>
   )
 }
 
 interface HistoryEntryProps {
   id: number,
   date: string,
-  mealsLeft: number
+  mealsLeft: number,
+  updateData: () => void
 }
-const HistoryEntry: React.FC<HistoryEntryProps> = ({ id, date, mealsLeft }) => {
-  // If time (date) is between 5am to 10am, return breakfast
-  // else if time is between 11am to 4pm, return lunch
-  // else if time is between 4pm to 10pm, return dinner
-  // else return midnight snack
+const HistoryEntry: React.FC<HistoryEntryProps> = ({ id, date, mealsLeft, updateData }) => {
   const entryTime = Moment(date, Moment.localeData().longDateFormat('LT'))
-  if (entryTime.isBetween(Moment("5:00", "HH:mm"), Moment("10:00", "HH:mm"))) {
+  const db = useSQLiteContext()
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const timeRanges = [
+    { label: "Breakfast", start: "05:00", end: "10:00" },
+    { label: "Lunch", start: "10:00", end: "16:00" },
+    { label: "Dinner", start: "16:00", end: "22:00" },
+  ]
+
+  async function deleteEntry() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // Delete from table
+    await db.runAsync("DELETE FROM meal_history WHERE id = ?;", id)
+    updateData()
+    // Update meal counter
+    const numMeals = Number(await AsyncStorage.getItemAsync("numMeals")) + 1
+    await AsyncStorage.setItemAsync("numMeals", String(numMeals))
+  }
+
+  const deleteView = () => {
     return(
-      <View style={styles.entryBackground}>
-        <Text style={styles.entryText}>Breakfast</Text>
-        <Text style={styles.entryTimeText}>{date}</Text>
+      <View style={{ width: size.height}}>
+        <TouchableOpacity
+          style={ styles.deleteBackground } 
+          onPress={ deleteEntry }
+          onLayout={event => {
+          const { width, height } = event.nativeEvent.layout;
+            setSize({ width, height });
+          }}
+        >
+          <View style={styles.trashIcon}>
+            <Ionicons name="trash" color="#FFFFFF" size={28}></Ionicons>
+          </View>
+        </TouchableOpacity>
       </View>
     )
-  } else if (entryTime.isBetween(Moment("10:00", "HH:mm"), Moment("16:00", "HH:mm"))) {
-    return(
-      <View style={styles.entryBackground}>
-        <Text style={styles.entryText}>Lunch</Text>
-        <Text style={styles.entryTimeText}>{date}</Text>
+  }
+
+  // Changes the type of meal (e.g. breakfast, lunch, dinner) based on time
+  const mealLabel =
+    timeRanges.find(({ start, end }) =>
+      entryTime.isBetween(Moment(start, "HH:mm"), Moment(end, "HH:mm"))
+    )?.label || "Midnight Snack"
+  return (
+    <Swipeable renderRightActions={deleteView}>
+      <View style={{backgroundColor: "#FFFFFF"}}>
+        <TouchableOpacity style={styles.entryBackground}>
+          <Text style={styles.entryText}>{mealLabel}</Text>
+          <Text style={styles.entryTimeText}>{date}</Text>
+          <Text style={styles.entryTimeText}>{mealsLeft} meals left</Text>
+        </TouchableOpacity>
       </View>
-    )
-  } else if (entryTime.isBetween(Moment("16:00", "HH:mm"), Moment("22:00", "HH:mm"))) {
-    return(
-      <View style={styles.entryBackground}>
-        <Text style={styles.entryText}>Dinner</Text>
-        <Text style={styles.entryTimeText}>{date}</Text>
-      </View>
-    )
-  } else {
-    return(
-      <View style={styles.entryBackground}>
-        <Text style={styles.entryText}>Midnight Snack</Text>
-        <Text style={styles.entryTimeText}>{date}</Text>
-      </View>
-    )
-  }  
+    </Swipeable>
+  )
 }
 
 const styles = StyleSheet.create({
   listBackground: {
-    flex: 1,
     backgroundColor: "rgba(255, 255, 255, 1)",
+    paddingBottom: 1
   },
   entryBackground: {
     backgroundColor: "rgba(255, 255, 255, 1)",
@@ -164,12 +196,23 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   entryText: {
-    flex: 1,
+    flex: 1.5,
     fontSize: 15,
   },
   entryTimeText: {
     flex: 1,
     fontSize: 15,
+  },
+  deleteBackground: {
+    flex:1,
+    backgroundColor: "rgba(255, 0, 0, 1)",
+  },
+  trashIcon: {
+    flex:1,
+    alignSelf: "flex-end",
+    alignItems: "center",
+    verticalAlign: "middle",
+    padding: 10,
   }
 })
 

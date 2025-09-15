@@ -1,18 +1,25 @@
-import React, { useState, useEffect } from 'react'
-import { Text, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native'
+import React, { useState, useEffect, useCallback } from 'react'
+import { Text, StyleSheet, Pressable, ScrollView, Dimensions, Button } from 'react-native'
 import AsyncStorage from 'expo-sqlite/kv-store'
 import * as SQLite from 'expo-sqlite'
 import { Image } from 'expo-image'
 import * as SplashScreen from 'expo-splash-screen'
+import { useFocusEffect } from '@react-navigation/native';
+import Dialog from "react-native-dialog";
+
 
 SplashScreen.preventAutoHideAsync();
 
 
 const Index = () => {
-  const [ meals, setMeals ] = useState<number|null>(null)
+  const [ meals, setMealsState ] = useState<number|null>(null)
   const width = Dimensions.get('window').width
   const height = Dimensions.get('window').height
   let database: SQLite.SQLiteDatabase
+
+  // Add meals dialog stuff
+  const [ dialogVisible, setDialogVisible ] = useState(false);
+  const [ dialogValue, setDialogValue ] = useState("");
 
   async function setup() {
     // Setup SQLite
@@ -36,14 +43,15 @@ const Index = () => {
     if (await AsyncStorage.getItem("numMeals") === null) {
       await AsyncStorage.setItemAsync("numMeals", "80")
     }
-    await setMeals(Number(await AsyncStorage.getItem("numMeals")))
+    await setMealsState(Number(await AsyncStorage.getItem("numMeals")))
   }
 
+  // Handle press of big button
   async function handlePress() {
     if (meals !== null) {
       // AsyncStorage
       await AsyncStorage.setItemAsync("numMeals", String(meals-1))
-      setMeals(meals - 1)
+      setMealsState(meals - 1)
 
       // SQLite
       try {
@@ -56,13 +64,17 @@ const Index = () => {
     }
   }
 
-  async function handleAdd() {
+  async function setMeals(mealsToSet: number) {
     if (meals !== null) {
-      await AsyncStorage.setItemAsync("numMeals", String(meals+1))
-      setMeals(meals + 1)
+      await AsyncStorage.setItemAsync("numMeals", String(mealsToSet))
+      setMealsState(mealsToSet)
     } else {
       console.error("Could not set 'numMeals' key to AsyncStorage")
     }
+  }
+
+  async function reloadMealCounter() {
+    setMealsState(Number(await AsyncStorage.getItem("numMeals")))
   }
 
   setup()
@@ -71,6 +83,13 @@ const Index = () => {
   useEffect(() => {
     SplashScreen.hideAsync()
   }, []);
+
+  // reload meals counter when page comes back in focus
+  useFocusEffect(
+    useCallback(() => {
+      reloadMealCounter()
+    }, [])
+  );
 
   return(
     <ScrollView style={styles.container}>
@@ -112,13 +131,30 @@ const Index = () => {
             borderRadius: 20
           }],
           pressed ? styles.addMealsPressed : styles.addMealsDefault]}
-        onPress={handleAdd}
+        onPress={() => {setDialogVisible(true)}}
       >
         <Text style={styles.addMealsText}>Add Meal</Text>
       </Pressable>
+      <Dialog.Container visible={dialogVisible}>
+        <Dialog.Title>Enter number of meals</Dialog.Title>
+        <Dialog.Input
+          keyboardType="numeric"
+          value={dialogValue}
+          onChangeText={setDialogValue}
+          placeholder="Type here"
+        />
+        <Dialog.Button label="Cancel" onPress={() => setDialogVisible(false)} />
+        <Dialog.Button label="Submit" onPress={() => {
+          setDialogVisible(false);
+          setMeals(Number(dialogValue))
+          setDialogValue("")
+        }} />
+      </Dialog.Container>
     </ScrollView>
   )
 }
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -181,6 +217,5 @@ const styles = StyleSheet.create({
     fontWeight: '700'
   },
 })
-
 
 export default Index
