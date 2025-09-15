@@ -133,7 +133,7 @@ const Index = () => {
           pressed ? styles.addMealsPressed : styles.addMealsDefault]}
         onPress={() => {setDialogVisible(true)}}
       >
-        <Text style={styles.addMealsText}>Add Meal</Text>
+        <Text style={styles.addMealsText}>Set Meals</Text>
       </Pressable>
       <Dialog.Container visible={dialogVisible}>
         <Dialog.Title>Enter number of meals</Dialog.Title>
