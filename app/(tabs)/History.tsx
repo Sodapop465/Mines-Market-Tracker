@@ -149,7 +149,12 @@ const HistoryEntry: React.FC<HistoryEntryProps> = ({ id, date, mealsLeft, update
           }}
         >
           <View style={styles.trashIcon}>
-            <Ionicons name="trash" color="#FFFFFF" size={28}></Ionicons>
+            <Ionicons 
+              name="trash" 
+              color="#FFFFFF" 
+              size={28}
+              style={{marginTop: size.height/2 - 14}}
+              />
           </View>
         </TouchableOpacity>
       </View>
@@ -212,7 +217,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
     alignItems: "center",
     verticalAlign: "middle",
-    padding: 10,
+    paddingRight: 10,
   }
 })
 
