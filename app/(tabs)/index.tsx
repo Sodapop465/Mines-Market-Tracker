@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Text, StyleSheet, Pressable, ScrollView, Dimensions, Button } from 'react-native'
+import { Text, StyleSheet, Pressable, ScrollView, Dimensions, useColorScheme, View, StatusBar } from 'react-native'
 import AsyncStorage from 'expo-sqlite/kv-store'
 import * as SQLite from 'expo-sqlite'
 import { Image } from 'expo-image'
 import * as SplashScreen from 'expo-splash-screen'
 import { useFocusEffect } from '@react-navigation/native';
 import Dialog from "react-native-dialog";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 SplashScreen.preventAutoHideAsync();
@@ -16,6 +17,7 @@ const Index = () => {
   const width = Dimensions.get('window').width
   const height = Dimensions.get('window').height
   let database: SQLite.SQLiteDatabase
+  const scheme = useColorScheme()
 
   // Add meals dialog stuff
   const [ dialogVisible, setDialogVisible ] = useState(false);
@@ -92,7 +94,9 @@ const Index = () => {
   );
 
   return(
-    <ScrollView style={styles.container}>
+    <View style={scheme === 'dark' ? styles.containerDark : styles.containerLight}>
+    <SafeAreaView style={{flex: 1}}>
+    <ScrollView style={styles.containerLight}>
       <Image
         style = {[styles.logo, { width: width }]}
         source = {require("../../assets/images/MinesMarketLogo.png")}
@@ -100,8 +104,8 @@ const Index = () => {
         transition={1000}
       />
 
-      <Text style={styles.mealCount}>{String(meals)}</Text>
-      <Text style={styles.mealText}>meals</Text>
+      <Text style={scheme === 'dark' ? styles.mealCountDark : styles.mealCountLight}>{String(meals)}</Text>
+      <Text style={scheme === 'dark' ? styles.mealTextDark : styles.mealTextLight}>meals</Text>
 
       <Pressable 
         style={({ pressed }) => [
@@ -130,10 +134,12 @@ const Index = () => {
             width: width/2, 
             borderRadius: 20
           }],
-          pressed ? styles.addMealsPressed : styles.addMealsDefault]}
+          pressed ? 
+            (scheme === 'dark' ? styles.addMealsPressedDark : styles.addMealsPressedLight) 
+            : (scheme === 'dark' ? styles.addMealsDefaultDark : styles.addMealsDefaultLight)]}
         onPress={() => {setDialogVisible(true)}}
       >
-        <Text style={styles.addMealsText}>Set Meals</Text>
+        <Text style={scheme === 'dark' ? styles.addMealsTextDark : styles.addMealsTextLight}>Set Meals</Text>
       </Pressable>
       <Dialog.Container visible={dialogVisible}>
         <Dialog.Title>Enter number of meals</Dialog.Title>
@@ -151,14 +157,20 @@ const Index = () => {
         }} />
       </Dialog.Container>
     </ScrollView>
+    </SafeAreaView>
+    </View>
   )
 }
 
 
 
 const styles = StyleSheet.create({
-  container: {
+  containerLight: {
     flex: 1,
+  },
+  containerDark: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 1)',
   },
   logo: {
     flex: 1,
@@ -167,17 +179,31 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     resizeMode: 'cover',
   },
-  mealCount: {
+  mealCountLight: {
     flex: 1,
     fontSize: 100,
     alignSelf: 'center',
     fontWeight: 'bold',
   },
-  mealText: {
+  mealCountDark: {
+    flex: 1,
+    fontSize: 100,
+    alignSelf: 'center',
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  mealTextLight: {
     flex: 1,
     marginTop: -20,
     fontSize: 20,
     alignSelf: 'center',
+  },
+  mealTextDark: {
+    flex: 1,
+    marginTop: -20,
+    fontSize: 20,
+    alignSelf: 'center',
+    color: 'white',
   },
   buttonDefault: {
     flex: 1,
@@ -200,21 +226,38 @@ const styles = StyleSheet.create({
     fontSize: 75,
     fontWeight: '700',
   },
-  addMealsDefault: {
+  addMealsDefaultLight: {
     flex: 1,
     height: 40,
     backgroundColor: 'rgba(207, 207, 207, 1)',
   },
-  addMealsPressed: {
+  addMealsDefaultDark: {
+    flex: 1,
+    height: 40,
+    backgroundColor: 'rgba(50, 50, 50, 1)',
+  },
+  addMealsPressedLight: {
     flex: 1,
     height: 40,
     backgroundColor: 'rgba(177, 177, 177, 1)',
     justifyContent: 'center',
     alignContent: 'center',
   },
-  addMealsText: {
+  addMealsPressedDark: {
+    flex: 1,
+    height: 40,
+    backgroundColor: 'rgba(75, 75, 75, 1)',
+    justifyContent: 'center',
+    alignContent: 'center',
+  },
+  addMealsTextLight: {
     fontSize: 20,
-    fontWeight: '700'
+    fontWeight: '700',
+  },
+  addMealsTextDark: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: 'white',
   },
 })
 

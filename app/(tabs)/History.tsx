@@ -1,12 +1,12 @@
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite'
-import { Text, View, StyleSheet, TouchableOpacity, SectionList } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity, SectionList, Platform, useColorScheme } from 'react-native'
 import React, { useState, useCallback } from 'react'
 import { useFocusEffect } from '@react-navigation/native';
 import Moment from 'moment'
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from 'expo-sqlite/kv-store';
 import * as Haptics from 'expo-haptics';
 
@@ -16,7 +16,9 @@ const History = () => {
   return(
     <SQLiteProvider databaseName='database.db'>
       <GestureHandlerRootView>
-        <HistoryList/>
+        <SafeAreaProvider>
+          <HistoryList/>
+        </SafeAreaProvider>
       </GestureHandlerRootView>
     </SQLiteProvider>
   )
@@ -25,6 +27,7 @@ const History = () => {
 
 
 const HistoryList = () => {
+  const scheme = useColorScheme()
   interface MealHistory {
     id: number,
     date: string,
@@ -44,13 +47,20 @@ const HistoryList = () => {
       date: string,
       meals_left: number
     }
-    const dataArray = await db.getAllAsync('SELECT * FROM meal_history') as rawData[]
+    let dataArray: rawData[]
+    try {
+      dataArray = await db.getAllAsync('SELECT * FROM meal_history') as rawData[]
+    } catch(error) {
+      console.error("Could not select data from table: " + error)
+      return
+    }
+    
     let tempDataArray: SectionType[] = []
 
     // Loop through every element in history table
     let sectionIndex = -1
     let prevDate = ""
-    for (let i = 0; i < dataArray.length; i++) {
+    for (let i = dataArray.length - 1; i >= 0; i--) {
       // Date handling for sections
       let currDate = Moment(dataArray.at(i)?.date).format("MMM Do YY")
       const tempID = dataArray.at(i)?.id
@@ -96,18 +106,22 @@ const HistoryList = () => {
   }
 
   return (
-    <SafeAreaView edges={['bottom']} style={{flex:1}}>
+    <View style={[scheme == 'dark' ? styles.screenContainerDark : styles.screenContainerLight, {flex:1}]}>
+    <SafeAreaView style={{flex:1}}>
       <SectionList
         sections={data}
         renderItem={({item}) => <HistoryEntry id={item.id} date={item.date} mealsLeft={item.mealsLeft} updateData={getData}/>}
         renderSectionHeader={({section: {title}}) => (
-          <Text style={styles.headerText}>{title}</Text>
+          <Text style={scheme==='dark' ? styles.headerTextDark : styles.headerTextLight}>{title}</Text>
         )}
         stickySectionHeadersEnabled={false}
-        style={styles.listBackground}
-        contentInset={{ bottom: 80 }}
+        contentContainerStyle={[
+          scheme === 'dark' ? styles.listBackgroundDark : styles.listBackgroundLight, 
+          Platform.OS === 'android' ? { paddingBottom: 100 } : null
+        ]}
       />
     </SafeAreaView>
+    </View>
   )
 }
 
@@ -118,6 +132,7 @@ interface HistoryEntryProps {
   updateData: () => void
 }
 const HistoryEntry: React.FC<HistoryEntryProps> = ({ id, date, mealsLeft, updateData }) => {
+  const scheme = useColorScheme()
   const entryTime = Moment(date, Moment.localeData().longDateFormat('LT'))
   const db = useSQLiteContext()
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -168,11 +183,11 @@ const HistoryEntry: React.FC<HistoryEntryProps> = ({ id, date, mealsLeft, update
     )?.label || "Midnight Snack"
   return (
     <Swipeable renderRightActions={deleteView}>
-      <View style={{backgroundColor: "#FFFFFF"}}>
-        <TouchableOpacity style={styles.entryBackground}>
-          <Text style={styles.entryText}>{mealLabel}</Text>
-          <Text style={styles.entryTimeText}>{date}</Text>
-          <Text style={styles.entryTimeText}>{mealsLeft} meals left</Text>
+      <View style={scheme==='dark' ? { backgroundColor: "#000000"} : { backgroundColor: "#FFFFFF"}}>
+        <TouchableOpacity style={scheme==='dark' ? styles.entryBackgroundDark : styles.entryBackgroundLight}>
+          <Text style={scheme === 'dark' ? styles.entryTextDark : styles.entryTextLight}>{mealLabel}</Text>
+          <Text style={scheme === 'dark' ? styles.entryTimeTextDark : styles.entryTimeTextLight}>{date}</Text>
+          <Text style={scheme === 'dark' ? styles.entryTimeTextDark : styles.entryTimeTextLight}>{mealsLeft} meals left</Text>
         </TouchableOpacity>
       </View>
     </Swipeable>
@@ -180,11 +195,19 @@ const HistoryEntry: React.FC<HistoryEntryProps> = ({ id, date, mealsLeft, update
 }
 
 const styles = StyleSheet.create({
-  listBackground: {
+  screenContainerLight: {
     backgroundColor: "rgba(255, 255, 255, 1)",
-    paddingBottom: 1
   },
-  entryBackground: {
+  screenContainerDark: {
+    backgroundColor: "rgba(0, 0, 0, 1)",
+  },
+  listBackgroundLight: {
+    backgroundColor: "rgba(255, 255, 255, 1)",
+  },
+  listBackgroundDark: {
+    backgroundColor: "rgba(0, 0, 0, 1)",
+  },
+  entryBackgroundLight: {
     backgroundColor: "rgba(255, 255, 255, 1)",
     padding: 15,
     borderColor: "rgba(255, 255, 255, 1)",
@@ -193,20 +216,47 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginHorizontal: 20
   },
-  headerText: {
+  entryBackgroundDark: {
+    backgroundColor: "rgba(0, 0, 0, 1)",
+    padding: 15,
+    borderColor: "rgba(0, 0, 0, 1)",
+    borderTopColor: "rgba(100, 100, 100, 1)",
+    borderWidth: 1,
+    flexDirection: "row",
+    marginHorizontal: 20
+  },
+  headerTextLight: {
     fontSize: 30,
     alignSelf: 'center',
     fontWeight: 700,
     marginBlockEnd: 10,
     marginTop: 20,
   },
-  entryText: {
+  headerTextDark: {
+    fontSize: 30,
+    alignSelf: 'center',
+    fontWeight: 700,
+    marginBlockEnd: 10,
+    marginTop: 20,
+    color: 'white',
+  },
+  entryTextLight: {
     flex: 1.5,
     fontSize: 15,
   },
-  entryTimeText: {
+  entryTextDark: {
+    flex: 1.5,
+    fontSize: 15,
+    color: 'white',
+  },
+  entryTimeTextLight: {
     flex: 1,
     fontSize: 15,
+  },
+  entryTimeTextDark: {
+    flex: 1,
+    fontSize: 15,
+    color: 'white',
   },
   deleteBackground: {
     flex:1,

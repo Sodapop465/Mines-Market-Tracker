@@ -1,36 +1,34 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { BlurView } from 'expo-blur';
-import { Tabs } from 'expo-router';
+import { NativeTabs, Icon, Label, Badge, VectorIcon } from 'expo-router/unstable-native-tabs';
+import { Platform } from 'react-native';
 
 export default function TabLayout() {
   return(
-    <Tabs screenOptions={{
-      tabBarStyle: { 
-        position: 'absolute',
-        backgroundColor: 'rgba(192, 192, 192, 0.3)',
-        borderTopWidth: 0,
-      },
-      tabBarBackground: () => (
-        <BlurView tint="light" intensity={50} style={{ flex: 1 }} experimentalBlurMethod='dimezisBlurView'/>  
-      ),
-      
-    }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Counter',
-          headerShown: true,
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="home" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="History"
-        options={{
-          title: 'History',
-          headerShown: true,
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="time" color={color} />,
-        }}
-      />
-    </Tabs>
+    <NativeTabs>
+       <NativeTabs.Trigger name="index">
+        <Label>Counter</Label>
+        {Platform.select({
+          ios: <Icon sf="house.fill"/>,
+          android: <Icon src={<VectorIcon family={MaterialIcons} name="home"/>}/>
+        })}
+        
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="History">
+        <Label>History</Label>
+        {Platform.select({
+          ios: <Icon sf="clock.fill"/>,
+          android: <Icon src={<VectorIcon family={MaterialIcons} name="access-time-filled"/>}/>
+        })}
+      </NativeTabs.Trigger>
+      {/* <NativeTabs.Trigger name="Settings">
+        <Label>Settings</Label>
+        {Platform.select({
+          ios: <Icon sf="gear"/>,
+          android: <Icon src={<VectorIcon family={MaterialIcons} name="access-time-filled"/>}/>
+        })}
+      </NativeTabs.Trigger> */}
+    </NativeTabs>
   );
 }
