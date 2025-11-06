@@ -22,13 +22,6 @@ export default function TabLayout() {
           android: <Icon src={<VectorIcon family={MaterialIcons} name="access-time-filled"/>}/>
         })}
       </NativeTabs.Trigger>
-      {/* <NativeTabs.Trigger name="Settings">
-        <Label>Settings</Label>
-        {Platform.select({
-          ios: <Icon sf="gear"/>,
-          android: <Icon src={<VectorIcon family={MaterialIcons} name="access-time-filled"/>}/>
-        })}
-      </NativeTabs.Trigger> */}
     </NativeTabs>
   );
 }

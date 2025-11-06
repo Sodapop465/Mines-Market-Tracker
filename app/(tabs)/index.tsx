@@ -95,69 +95,69 @@ const Index = () => {
 
   return(
     <View style={scheme === 'dark' ? styles.containerDark : styles.containerLight}>
-    <SafeAreaView style={{flex: 1}}>
-    <ScrollView style={styles.containerLight}>
-      <Image
-        style = {[styles.logo, { width: width }]}
-        source = {require("../../assets/images/MinesMarketLogo.png")}
-        contentFit="cover"
-        transition={1000}
-      />
+      <SafeAreaView style={{flex: 1}}>
+        <ScrollView style={styles.containerLight}>
+          <Image
+            style = {[styles.logo, { width: width }]}
+            source = {require("../../assets/images/MinesMarketLogo.png")}
+            contentFit="cover"
+            transition={1000}
+          />
 
-      <Text style={scheme === 'dark' ? styles.mealCountDark : styles.mealCountLight}>{String(meals)}</Text>
-      <Text style={scheme === 'dark' ? styles.mealTextDark : styles.mealTextLight}>meals</Text>
+          <Text style={scheme === 'dark' ? styles.mealCountDark : styles.mealCountLight}>{String(meals)}</Text>
+          <Text style={scheme === 'dark' ? styles.mealTextDark : styles.mealTextLight}>meals</Text>
 
-      <Pressable 
-        style={({ pressed }) => [
-          [styles.buttonDefault, { 
-            width: width - 30, 
-            height: width - 30, 
-            borderRadius: width/2
-          }],
-          pressed ? 
-            [styles.buttonPressed, { 
-              width: width - 30, 
-              height: width - 30, 
-              borderRadius: width/2 }]: 
-            [styles.buttonDefault, {width: width - 30, 
+          <Pressable 
+            style={({ pressed }) => [
+              [styles.buttonDefault, { 
+                width: width - 30, 
                 height: width - 30, 
-                borderRadius: width/2}],
-        ]}
-        onPress={handlePress}
-      >
-        <Text style={styles.buttonText}>EAT</Text>
-      </Pressable>
+                borderRadius: width/2
+              }],
+              pressed ? 
+                [styles.buttonPressed, { 
+                  width: width - 30, 
+                  height: width - 30, 
+                  borderRadius: width/2 }]: 
+                [styles.buttonDefault, {width: width - 30, 
+                    height: width - 30, 
+                    borderRadius: width/2}],
+            ]}
+            onPress={handlePress}
+          >
+            <Text style={styles.buttonText}>EAT</Text>
+          </Pressable>
 
-      <Pressable 
-        style={({ pressed }) => [
-          [styles.buttonDefault, { 
-            width: width/2, 
-            borderRadius: 20
-          }],
-          pressed ? 
-            (scheme === 'dark' ? styles.addMealsPressedDark : styles.addMealsPressedLight) 
-            : (scheme === 'dark' ? styles.addMealsDefaultDark : styles.addMealsDefaultLight)]}
-        onPress={() => {setDialogVisible(true)}}
-      >
-        <Text style={scheme === 'dark' ? styles.addMealsTextDark : styles.addMealsTextLight}>Set Meals</Text>
-      </Pressable>
-      <Dialog.Container visible={dialogVisible}>
-        <Dialog.Title>Enter number of meals</Dialog.Title>
-        <Dialog.Input
-          keyboardType="numeric"
-          value={dialogValue}
-          onChangeText={setDialogValue}
-          placeholder="Type here"
-        />
-        <Dialog.Button label="Cancel" onPress={() => setDialogVisible(false)} />
-        <Dialog.Button label="Submit" onPress={() => {
-          setDialogVisible(false);
-          setMeals(Number(dialogValue))
-          setDialogValue("")
-        }} />
-      </Dialog.Container>
-    </ScrollView>
-    </SafeAreaView>
+          <Pressable 
+            style={({ pressed }) => [
+              [styles.buttonDefault, { 
+                width: width/2, 
+                borderRadius: 20
+              }],
+              pressed ? 
+                (scheme === 'dark' ? styles.addMealsPressedDark : styles.addMealsPressedLight) 
+                : (scheme === 'dark' ? styles.addMealsDefaultDark : styles.addMealsDefaultLight)]}
+            onPress={() => {setDialogVisible(true)}}
+          >
+            <Text style={scheme === 'dark' ? styles.addMealsTextDark : styles.addMealsTextLight}>Set Meals</Text>
+          </Pressable>
+          <Dialog.Container visible={dialogVisible}>
+            <Dialog.Title>Enter number of meals</Dialog.Title>
+            <Dialog.Input
+              keyboardType="numeric"
+              value={dialogValue}
+              onChangeText={setDialogValue}
+              placeholder="Type here"
+            />
+            <Dialog.Button label="Cancel" onPress={() => setDialogVisible(false)} />
+            <Dialog.Button label="Submit" onPress={() => {
+              setDialogVisible(false);
+              setMeals(Number(dialogValue))
+              setDialogValue("")
+            }} />
+          </Dialog.Container>
+        </ScrollView>
+      </SafeAreaView>
     </View>
   )
 }

@@ -13,10 +13,14 @@ import * as Haptics from 'expo-haptics';
 
 
 const History = () => {
+  const scheme = useColorScheme()
   return(
     <SQLiteProvider databaseName='database.db'>
       <GestureHandlerRootView>
         <SafeAreaProvider>
+          <View style={scheme==='dark' ? styles.pageHeaderDark : styles.pageHeaderLight}>
+            <Text style={scheme==='dark' ? styles.pageHeaderTextDark : styles.pageHeaderTextLight}>History</Text>
+          </View>
           <HistoryList/>
         </SafeAreaProvider>
       </GestureHandlerRootView>
@@ -107,20 +111,20 @@ const HistoryList = () => {
 
   return (
     <View style={[scheme == 'dark' ? styles.screenContainerDark : styles.screenContainerLight, {flex:1}]}>
-    <SafeAreaView style={{flex:1}}>
-      <SectionList
-        sections={data}
-        renderItem={({item}) => <HistoryEntry id={item.id} date={item.date} mealsLeft={item.mealsLeft} updateData={getData}/>}
-        renderSectionHeader={({section: {title}}) => (
-          <Text style={scheme==='dark' ? styles.headerTextDark : styles.headerTextLight}>{title}</Text>
-        )}
-        stickySectionHeadersEnabled={false}
-        contentContainerStyle={[
-          scheme === 'dark' ? styles.listBackgroundDark : styles.listBackgroundLight, 
-          Platform.OS === 'android' ? { paddingBottom: 100 } : null
-        ]}
-      />
-    </SafeAreaView>
+      <SafeAreaView style={{flex:1}}>
+        <SectionList
+          sections={data}
+          renderItem={({item}) => <HistoryEntry id={item.id} date={item.date} mealsLeft={item.mealsLeft} updateData={getData}/>}
+          renderSectionHeader={({section: {title}}) => (
+            <Text style={scheme==='dark' ? styles.headerTextDark : styles.headerTextLight}>{title}</Text>
+          )}
+          stickySectionHeadersEnabled={false}
+          contentContainerStyle={[
+            scheme === 'dark' ? styles.listBackgroundDark : styles.listBackgroundLight, 
+            Platform.OS === 'android' ? { paddingBottom: 100 } : null
+          ]}
+        />
+      </SafeAreaView>
     </View>
   )
 }
@@ -206,6 +210,26 @@ const styles = StyleSheet.create({
   },
   listBackgroundDark: {
     backgroundColor: "rgba(0, 0, 0, 1)",
+  },
+  pageHeaderTextLight: {
+    color: 'black',
+    fontWeight: 'bold',
+  },
+  pageHeaderTextDark: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 20,
+    marginTop: 50,
+    textAlign: 'center',
+  },
+  pageHeaderLight: {
+    backgroundColor: 'white',
+    height: 100,
+  },
+  pageHeaderDark: {
+    backgroundColor: 'black',
+    height: 60,
+    
   },
   entryBackgroundLight: {
     backgroundColor: "rgba(255, 255, 255, 1)",
