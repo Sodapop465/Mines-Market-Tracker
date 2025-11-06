@@ -18,9 +18,6 @@ const History = () => {
     <SQLiteProvider databaseName='database.db'>
       <GestureHandlerRootView>
         <SafeAreaProvider>
-          <View style={scheme==='dark' ? styles.pageHeaderDark : styles.pageHeaderLight}>
-            <Text style={scheme==='dark' ? styles.pageHeaderTextDark : styles.pageHeaderTextLight}>History</Text>
-          </View>
           <HistoryList/>
         </SafeAreaProvider>
       </GestureHandlerRootView>
