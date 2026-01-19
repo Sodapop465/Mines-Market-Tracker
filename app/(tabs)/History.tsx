@@ -3,12 +3,12 @@ import { Text, View, StyleSheet, TouchableOpacity, SectionList, Platform, useCol
 import React, { useState, useCallback, memo } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
 import Moment from 'moment'
-import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import AsyncStorage from 'expo-sqlite/kv-store'
 import * as Haptics from 'expo-haptics'
-
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
+import { useRouter } from 'expo-router'
 
 
 const History = () => {
@@ -74,18 +74,16 @@ const HeaderTabButton:React.FC<HeaderTabButtonProps> = ({ title, activeTab, setA
   )
 }
 
+/*
+  Renders the appropriate history list based on selected header tab
+*/
 interface HistoryListProps {
   page: string
 }
 const HistoryList:React.FC<HistoryListProps> = ({ page }) => {
   return (
     <>
-      <View style={{ display: page === 'Meals' ? 'flex' : 'none', flex: 1 }}>
-        <MemoMealHistory />
-      </View>
-      <View style={{ display: page === 'Munch Money' ? 'flex' : 'none', flex: 1 }}>
-        <MemoMunchHistory />
-      </View>
+      { page === "Meals" ? <MealHistory /> : <MunchHistory /> }
     </>
   )
 }
@@ -166,7 +164,9 @@ const MealHistory = () => {
   if (data === null) {
     getData()
     return (
-      <Text>Loading...</Text>
+      <View style={ scheme === 'dark' ? styles.screenContainerDark : styles.screenContainerLight }>
+        <Text>Loading...</Text>
+      </View>
     )
   }
 
@@ -218,37 +218,13 @@ const MealHistoryEntry: React.FC<MealHistoryEntryProps> = ({ id, date, mealsLeft
     await AsyncStorage.setItemAsync("numMeals", String(numMeals))
   }
 
-  const deleteView = () => {
-    return(
-      <View style={{ width: size.height}}>
-        <TouchableOpacity
-          style={ styles.deleteBackground } 
-          onPress={ deleteEntry }
-          onLayout={event => {
-          const { width, height } = event.nativeEvent.layout;
-            setSize({ width, height });
-          }}
-        >
-          <View style={styles.trashIcon}>
-            <Ionicons 
-              name="trash" 
-              color="#FFFFFF" 
-              size={28}
-              style={{marginTop: size.height/2 - 14}}
-              />
-          </View>
-        </TouchableOpacity>
-      </View>
-    )
-  }
-
   // Changes the type of meal (e.g. breakfast, lunch, dinner) based on time
   const mealLabel =
     timeRanges.find(({ start, end }) =>
       entryTime.isBetween(Moment(start, "HH:mm"), Moment(end, "HH:mm"))
     )?.label || "Midnight Snack"
   return (
-    <Swipeable renderRightActions={deleteView}>
+    <Swipeable renderRightActions={() => <DeleteView deleteEntry={deleteEntry} />}>
       <View style={scheme==='dark' ? { backgroundColor: "#000000"} : { backgroundColor: "#FFFFFF"}}>
         <TouchableOpacity style={scheme==='dark' ? styles.entryBackgroundDark : styles.entryBackgroundLight}>
           <Text style={scheme === 'dark' ? styles.entryTextDark : styles.entryTextLight}>{mealLabel}</Text>
@@ -257,6 +233,36 @@ const MealHistoryEntry: React.FC<MealHistoryEntryProps> = ({ id, date, mealsLeft
         </TouchableOpacity>
       </View>
     </Swipeable>
+  )
+}
+
+interface DeleteViewProps {
+  deleteEntry: () => void
+}
+const DeleteView = ({ deleteEntry }: DeleteViewProps) => {
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  return(
+    <View 
+      style={{ width: size.height }}
+      onLayout={event => {
+        const { width, height } = event.nativeEvent.layout;
+        setSize({ width, height });
+      }}
+    >
+      <TouchableOpacity
+        style={ [styles.deleteBackground, { width: size.height }] }
+        onPress={ deleteEntry }
+      >
+        <View style={styles.trashIcon}>
+          <Ionicons 
+            name="trash" 
+            color="#FFFFFF" 
+            size={28}
+            style={{marginTop: size.height/2 - 14}}
+            />
+        </View>
+      </TouchableOpacity>
+    </View>
   )
 }
 
@@ -301,8 +307,8 @@ const MunchHistory = () => {
     for (let i = rawDataArr.length - 1; i >= 0; i--) {
       const rawData = rawDataArr.at(i)
       if (rawData === undefined) {
-        console.error("Table 'munch_money_history' contains undefined elements")
-        return
+        console.error("database table 'munch_money_history' contains undefined elements")
+        continue
       }
       const date = Moment(rawData.date).format("MMM Do YY")
       const time = Moment(rawData.date).format("LT")
@@ -343,7 +349,9 @@ const MunchHistory = () => {
   if (historyData === null) {
     getData()
     return (
-      <Text>Loading...</Text>
+      <View style={ scheme === 'dark' ? styles.screenContainerDark : styles.screenContainerLight }>
+        <Text>Loading...</Text>
+      </View>
     )
   }
 
@@ -389,7 +397,7 @@ const MunchHistoryEntry:React.FC<MunchHistoryEntryProps> = ({ id, time, balance,
 
   const deleteView = () => {
     return(
-      <View style={{ width: size.height}}>
+      <View style={{ width: 80 }}>
         <TouchableOpacity
           style={ styles.deleteBackground } 
           onPress={ deleteEntry }
@@ -412,7 +420,7 @@ const MunchHistoryEntry:React.FC<MunchHistoryEntryProps> = ({ id, time, balance,
   }
 
   return (
-    <Swipeable renderRightActions={deleteView}>
+    <Swipeable renderRightActions={() => <DeleteView deleteEntry = {deleteEntry}/>}>
       <View style={scheme==='dark' ? { backgroundColor: "#000000"} : { backgroundColor: "#FFFFFF"}}>
         <TouchableOpacity style={scheme==='dark' ? styles.entryBackgroundDark : styles.entryBackgroundLight}>
           <Text style={scheme === 'dark' ? styles.entryTextDark : styles.entryTextLight}>${transactionAmount.toFixed(2)}</Text>
@@ -424,13 +432,6 @@ const MunchHistoryEntry:React.FC<MunchHistoryEntryProps> = ({ id, time, balance,
   )
 }
 
-const MemoMealHistory = React.memo(MealHistory)
-const MemoMunchHistory = React.memo(MunchHistory)
-
-const pages = [
-  { key: 'Meals', component: MemoMealHistory },
-  { key: 'Munch Money', component: MemoMunchHistory },
-]
 
 const styles = StyleSheet.create({
   screenContainerLight: {
