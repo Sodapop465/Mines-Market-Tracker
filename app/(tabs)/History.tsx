@@ -298,7 +298,12 @@ const MunchHistory = () => {
     let tempDataArray: SectionType[] = []
     let sectionIndex = -1
     let prevDate = ""
-    for (const rawData of rawDataArr) {
+    for (let i = rawDataArr.length - 1; i >= 0; i--) {
+      const rawData = rawDataArr.at(i)
+      if (rawData === undefined) {
+        console.error("Table 'munch_money_history' contains undefined elements")
+        return
+      }
       const date = Moment(rawData.date).format("MMM Do YY")
       const time = Moment(rawData.date).format("LT")
       const balance = rawData.remaining_balance
