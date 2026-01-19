@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Text, StyleSheet, Pressable, ScrollView, Dimensions, useColorScheme, View, FlatList, LayoutChangeEvent } from 'react-native'
+import { Text, StyleSheet, Pressable, ScrollView, Dimensions, useColorScheme, View, FlatList, LayoutChangeEvent, Platform } from 'react-native'
 import AsyncStorage from 'expo-sqlite/kv-store'
 import * as SQLite from 'expo-sqlite'
 import { Image } from 'expo-image'
@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
   dotContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 60,
+    marginBottom: Platform.OS === 'ios' ? 60 : 100,
   },
   dotLight: {
     width: 8,

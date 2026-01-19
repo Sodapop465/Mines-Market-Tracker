@@ -506,14 +506,14 @@ const styles = StyleSheet.create({
   },
   headerTabsContainerLight: {
     flexDirection: 'row',
-    height: (Platform.OS === 'ios' ? 130 : 70),
-    paddingTop: (Platform.OS === 'ios' ? 50 : 0),
+    height: (Platform.OS === 'ios' ? 130 : 90),
+    paddingTop: (Platform.OS === 'ios' ? 50 : 20),
     backgroundColor: 'rgba(220, 220, 220, 1)',
   },
   headerTabsContainerDark: {
     flexDirection: 'row',
-    height: (Platform.OS === 'ios' ? 130 : 70),
-    paddingTop: (Platform.OS === 'ios' ? 50 : 0),
+    height: (Platform.OS === 'ios' ? 130 : 90),
+    paddingTop: (Platform.OS === 'ios' ? 50 : 20),
     backgroundColor: 'rgba(20, 20, 20, 1)',
   },
   headerTabContainerLightDefault: {
